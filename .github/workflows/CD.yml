@@ -1,0 +1,43 @@
+name: cd
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/*'
+      - '.github/workflows/CD.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    steps:
+      - 
+        uses: actions/checkout@master
+      -
+        run: |
+          docker run --rm -v $(pwd):/app -v /tmp:/tmp -w /app rodrigodornelles/sdkman:latest sh -c "
+            sdk install java 17.0.14-jbr && 
+            sdk install kotlin 2.1.21 &&
+            sdk install gradle 8.14 &&
+            gradle build
+          "
+      -
+        uses: actions/configure-pages@v4
+      -
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'dist'
+      -
+        id: deployment
+        uses: actions/deploy-pages@v4
